@@ -3,7 +3,7 @@ Unit tests for causal_success_utils module.
 
 Import as:
 
-import research.A_Causal_Analysis_of_Success_in_Modern_Society.test_causal_success_utils as racaosimstcsu
+import research.Causal_Analysis_of_Agent_Skill_And_Luck.test.test_causal_success_utils as rcaoasalttcsu
 """
 
 import logging
@@ -19,7 +19,7 @@ pytest.importorskip(
     reason="PyMC not available or incompatible with current numpy version",
 )
 
-import research.A_Causal_Analysis_of_Success_in_Modern_Society.causal_success_utils as racaosimscsu
+import research.Causal_Analysis_of_Agent_Skill_And_Luck.causal_success_utils as rcaoasalcsu
 
 _LOG = logging.getLogger(__name__)
 
@@ -44,7 +44,7 @@ class TestAgent(hunitest.TestCase):
         iq = 0.6
         networking = 0.7
         # Run test.
-        agent = racaosimscsu.Agent(agent_id, intensity, iq, networking)
+        agent = rcaoasalcsu.Agent(agent_id, intensity, iq, networking)
         # Check outputs.
         self.assertEqual(agent.id, 0)
         self.assertAlmostEqual(agent.capital, 1.0)
@@ -63,7 +63,7 @@ class TestAgent(hunitest.TestCase):
         networking = 0.5
         initial_capital = 5.0
         # Run test.
-        agent = racaosimscsu.Agent(
+        agent = rcaoasalcsu.Agent(
             agent_id, intensity, iq, networking, initial_capital=initial_capital
         )
         # Check outputs.
@@ -80,7 +80,7 @@ class TestAgent(hunitest.TestCase):
         iq = -0.5
         networking = 0.5
         # Run test.
-        agent = racaosimscsu.Agent(agent_id, intensity, iq, networking)
+        agent = rcaoasalcsu.Agent(agent_id, intensity, iq, networking)
         # Check outputs.
         self.assertAlmostEqual(agent.talent["intensity"], 1.0)
         self.assertAlmostEqual(agent.talent["iq"], 0.0)
@@ -97,7 +97,7 @@ class TestAgent(hunitest.TestCase):
         networking = 0.5
         initial_capital = 0.001
         # Run test.
-        agent = racaosimscsu.Agent(
+        agent = rcaoasalcsu.Agent(
             agent_id, intensity, iq, networking, initial_capital=initial_capital
         )
         # Check outputs.
@@ -119,7 +119,7 @@ class Test_talent_norm(hunitest.TestCase):
         Test talent_norm returns correct Euclidean norm of talent vector.
         """
         # Prepare inputs.
-        agent = racaosimscsu.Agent(0, 0.3, 0.4, 0.5, initial_capital=1.2)
+        agent = rcaoasalcsu.Agent(0, 0.3, 0.4, 0.5, initial_capital=1.2)
         # Run test.
         norm = agent.talent_norm
         # Check outputs.
@@ -131,7 +131,7 @@ class Test_talent_norm(hunitest.TestCase):
         Test talent_norm with all talents equal to 0.5.
         """
         # Prepare inputs.
-        agent = racaosimscsu.Agent(0, 0.5, 0.5, 0.5, initial_capital=0.5)
+        agent = rcaoasalcsu.Agent(0, 0.5, 0.5, 0.5, initial_capital=0.5)
         # Run test.
         norm = agent.talent_norm
         # Check outputs.
@@ -143,7 +143,7 @@ class Test_talent_norm(hunitest.TestCase):
         Test talent_norm with edge case values (0 and 1).
         """
         # Prepare inputs.
-        agent = racaosimscsu.Agent(0, 0.0, 1.0, 0.0, initial_capital=1.0)
+        agent = rcaoasalcsu.Agent(0, 0.0, 1.0, 0.0, initial_capital=1.0)
         # Run test.
         norm = agent.talent_norm
         # Check outputs.
@@ -169,7 +169,7 @@ class Test_get_event_probability(hunitest.TestCase):
         :param expected_range: Tuple of (min, max) expected probability
         """
         # Run test.
-        agent = racaosimscsu.Agent(0, intensity_val, 0.5, 0.5)
+        agent = rcaoasalcsu.Agent(0, intensity_val, 0.5, 0.5)
         prob = agent.get_event_probability()
         # Check outputs.
         self.assertGreaterEqual(prob, expected_range[0])
@@ -182,7 +182,7 @@ class Test_get_event_probability(hunitest.TestCase):
         # Prepare inputs.
         # At intensity=0.5, sigmoid should return 0.5 (midpoint of [0, 1]).
         # Run test.
-        agent = racaosimscsu.Agent(0, 0.5, 0.5, 0.5)
+        agent = rcaoasalcsu.Agent(0, 0.5, 0.5, 0.5)
         prob = agent.get_event_probability()
         # Check outputs.
         self.assertAlmostEqual(prob, 0.5, places=2)
@@ -213,7 +213,7 @@ class Test_get_event_probability(hunitest.TestCase):
         intensities = [0.0, 0.25, 0.5, 0.75, 1.0]
         # Run test.
         probs = [
-            racaosimscsu.Agent(0, i, 0.5, 0.5).get_event_probability()
+            rcaoasalcsu.Agent(0, i, 0.5, 0.5).get_event_probability()
             for i in intensities
         ]
         # Check outputs.
@@ -236,7 +236,7 @@ class Test_apply_event(hunitest.TestCase):
         Test applying a lucky event increases capital.
         """
         # Prepare inputs.
-        agent = racaosimscsu.Agent(0, 0.5, 0.5, 0.5, initial_capital=1.0)
+        agent = rcaoasalcsu.Agent(0, 0.5, 0.5, 0.5, initial_capital=1.0)
         impact = 0.25
         # Run test.
         agent.apply_event("lucky", impact)
@@ -248,7 +248,7 @@ class Test_apply_event(hunitest.TestCase):
         Test applying an unlucky event decreases capital.
         """
         # Prepare inputs.
-        agent = racaosimscsu.Agent(0, 0.5, 0.5, 0.5, initial_capital=1.0)
+        agent = rcaoasalcsu.Agent(0, 0.5, 0.5, 0.5, initial_capital=1.0)
         impact = 0.15
         # Run test.
         agent.apply_event("unlucky", impact)
@@ -260,7 +260,7 @@ class Test_apply_event(hunitest.TestCase):
         Test applying an unlucky event respects minimum capital floor (0.01).
         """
         # Prepare inputs.
-        agent = racaosimscsu.Agent(0, 0.5, 0.5, 0.5, initial_capital=0.05)
+        agent = rcaoasalcsu.Agent(0, 0.5, 0.5, 0.5, initial_capital=0.05)
         impact = 0.99
         # Run test.
         agent.apply_event("unlucky", impact)
@@ -272,7 +272,7 @@ class Test_apply_event(hunitest.TestCase):
         Test applying an event increments the appropriate event counter.
         """
         # Prepare inputs.
-        agent = racaosimscsu.Agent(0, 0.5, 0.5, 0.5)
+        agent = rcaoasalcsu.Agent(0, 0.5, 0.5, 0.5)
         # Run test.
         agent.apply_event("lucky", 0.1)
         agent.apply_event("unlucky", 0.1)
@@ -286,7 +286,7 @@ class Test_apply_event(hunitest.TestCase):
         Test capital_history is updated after each event.
         """
         # Prepare inputs.
-        agent = racaosimscsu.Agent(0, 0.5, 0.5, 0.5, initial_capital=1.0)
+        agent = rcaoasalcsu.Agent(0, 0.5, 0.5, 0.5, initial_capital=1.0)
         # Run test.
         agent.apply_event("lucky", 0.25)
         agent.apply_event("unlucky", 0.1)
@@ -301,7 +301,7 @@ class Test_apply_event(hunitest.TestCase):
         Test apply_event raises error for invalid event_type.
         """
         # Prepare inputs.
-        agent = racaosimscsu.Agent(0, 0.5, 0.5, 0.5)
+        agent = rcaoasalcsu.Agent(0, 0.5, 0.5, 0.5)
         # Run test and check output.
         with self.assertRaises(ValueError):
             agent.apply_event("invalid", 0.1)
@@ -311,7 +311,7 @@ class Test_apply_event(hunitest.TestCase):
         Test negative impact magnitude is converted to absolute value.
         """
         # Prepare inputs.
-        agent = racaosimscsu.Agent(0, 0.5, 0.5, 0.5, initial_capital=1.0)
+        agent = rcaoasalcsu.Agent(0, 0.5, 0.5, 0.5, initial_capital=1.0)
         # Run test.
         agent.apply_event("lucky", -0.25)
         # Check outputs.
@@ -335,7 +335,7 @@ class Test_create_population(hunitest.TestCase):
         # Prepare inputs.
         n_agents = 50
         # Run test.
-        agents = racaosimscsu.create_population(n_agents=n_agents, seed=42)
+        agents = rcaoasalcsu.create_population(n_agents=n_agents, seed=42)
         # Check outputs.
         self.assertEqual(len(agents), n_agents)
 
@@ -346,7 +346,7 @@ class Test_create_population(hunitest.TestCase):
         # Prepare inputs.
         n_agents = 20
         # Run test.
-        agents = racaosimscsu.create_population(n_agents=n_agents, seed=42)
+        agents = rcaoasalcsu.create_population(n_agents=n_agents, seed=42)
         # Check outputs.
         for agent in agents:
             self.assertGreaterEqual(agent.talent["intensity"], 0.0)
@@ -363,7 +363,7 @@ class Test_create_population(hunitest.TestCase):
         # Prepare inputs.
         n_agents = 15
         # Run test.
-        agents = racaosimscsu.create_population(n_agents=n_agents, seed=42)
+        agents = rcaoasalcsu.create_population(n_agents=n_agents, seed=42)
         # Check outputs.
         for agent in agents:
             self.assertAlmostEqual(agent.capital, 1.0)
@@ -376,8 +376,8 @@ class Test_create_population(hunitest.TestCase):
         n_agents = 10
         seed = 123
         # Run test.
-        agents1 = racaosimscsu.create_population(n_agents=n_agents, seed=seed)
-        agents2 = racaosimscsu.create_population(n_agents=n_agents, seed=seed)
+        agents1 = rcaoasalcsu.create_population(n_agents=n_agents, seed=seed)
+        agents2 = rcaoasalcsu.create_population(n_agents=n_agents, seed=seed)
         # Check outputs.
         for a1, a2 in zip(agents1, agents2):
             self.assertAlmostEqual(
@@ -396,7 +396,7 @@ class Test_create_population(hunitest.TestCase):
         n_agents = 0
         # Run test and check output.
         with self.assertRaises(AssertionError):
-            racaosimscsu.create_population(n_agents=n_agents, seed=42)
+            rcaoasalcsu.create_population(n_agents=n_agents, seed=42)
 
     def test6(self) -> None:
         """
@@ -405,7 +405,7 @@ class Test_create_population(hunitest.TestCase):
         # Prepare inputs.
         n_agents = 25
         # Run test.
-        agents = racaosimscsu.create_population(n_agents=n_agents, seed=42)
+        agents = rcaoasalcsu.create_population(n_agents=n_agents, seed=42)
         # Check outputs.
         for i, agent in enumerate(agents):
             self.assertEqual(agent.id, i)
@@ -429,7 +429,7 @@ class Test_calculate_gini(hunitest.TestCase):
         :param expected_gini_val: Expected Gini coefficient
         """
         # Run test.
-        gini = racaosimscsu.calculate_gini(values_arr)
+        gini = rcaoasalcsu.calculate_gini(values_arr)
         # Check outputs.
         self.assertAlmostEqual(gini, expected_gini_val, places=3)
 
@@ -451,7 +451,7 @@ class Test_calculate_gini(hunitest.TestCase):
         # Prepare inputs.
         values = np.array([0.1, 0.1, 0.1, 100.0], dtype=float)
         # Run test.
-        gini = racaosimscsu.calculate_gini(values)
+        gini = rcaoasalcsu.calculate_gini(values)
         # Check outputs.
         self.assertGreater(gini, 0.7)
 
@@ -462,7 +462,7 @@ class Test_calculate_gini(hunitest.TestCase):
         # Prepare inputs.
         values = np.array([1.0, 2.0, 3.0, 4.0, 5.0], dtype=float)
         # Run test.
-        gini = racaosimscsu.calculate_gini(values)
+        gini = rcaoasalcsu.calculate_gini(values)
         # Check outputs.
         self.assertGreaterEqual(gini, 0.0)
         self.assertLessEqual(gini, 1.0)
@@ -474,7 +474,7 @@ class Test_calculate_gini(hunitest.TestCase):
         # Prepare inputs.
         values = np.array([5.0], dtype=float)
         # Run test.
-        gini = racaosimscsu.calculate_gini(values)
+        gini = rcaoasalcsu.calculate_gini(values)
         # Check outputs.
         self.assertAlmostEqual(gini, 0.0)
 
@@ -486,7 +486,7 @@ class Test_calculate_gini(hunitest.TestCase):
         values = np.array([], dtype=float)
         # Run test and check output.
         with self.assertRaises(AssertionError):
-            racaosimscsu.calculate_gini(values)
+            rcaoasalcsu.calculate_gini(values)
 
     def test6(self) -> None:
         """
@@ -496,7 +496,7 @@ class Test_calculate_gini(hunitest.TestCase):
         values = np.array([1.0, 2.0, -1.0], dtype=float)
         # Run test and check output.
         with self.assertRaises(AssertionError):
-            racaosimscsu.calculate_gini(values)
+            rcaoasalcsu.calculate_gini(values)
 
     def test7(self) -> None:
         """
@@ -505,7 +505,7 @@ class Test_calculate_gini(hunitest.TestCase):
         # Prepare inputs.
         values = np.array([0.0, 0.0, 0.0], dtype=float)
         # Run test.
-        gini = racaosimscsu.calculate_gini(values)
+        gini = rcaoasalcsu.calculate_gini(values)
         # Check outputs.
         self.assertAlmostEqual(gini, 0.0)
 
@@ -525,9 +525,9 @@ class Test_get_results_dataframe(hunitest.TestCase):
         Test get_results_dataframe converts agents to correct columns.
         """
         # Prepare inputs.
-        agents = racaosimscsu.create_population(n_agents=5, seed=42)
+        agents = rcaoasalcsu.create_population(n_agents=5, seed=42)
         # Run test.
-        df = racaosimscsu.get_results_dataframe(agents)
+        df = rcaoasalcsu.get_results_dataframe(agents)
         # Check outputs.
         expected_cols = [
             "id",
@@ -550,7 +550,7 @@ class Test_get_results_dataframe(hunitest.TestCase):
         # Prepare inputs.
         agents = []
         # Run test.
-        df = racaosimscsu.get_results_dataframe(agents)
+        df = rcaoasalcsu.get_results_dataframe(agents)
         # Check outputs.
         self.assertTrue(df.empty)
 
@@ -559,12 +559,12 @@ class Test_get_results_dataframe(hunitest.TestCase):
         Test get_results_dataframe computes net_events correctly.
         """
         # Prepare inputs.
-        agent = racaosimscsu.Agent(0, 0.5, 0.5, 0.5)
+        agent = rcaoasalcsu.Agent(0, 0.5, 0.5, 0.5)
         agent.apply_event("lucky", 0.1)
         agent.apply_event("lucky", 0.1)
         agent.apply_event("unlucky", 0.1)
         # Run test.
-        df = racaosimscsu.get_results_dataframe([agent])
+        df = rcaoasalcsu.get_results_dataframe([agent])
         # Check outputs.
         net = df.iloc[0]["net_events"]
         self.assertEqual(net, 1)
@@ -574,9 +574,9 @@ class Test_get_results_dataframe(hunitest.TestCase):
         Test get_results_dataframe includes talent_norm computation.
         """
         # Prepare inputs.
-        agents = racaosimscsu.create_population(n_agents=3, seed=42)
+        agents = rcaoasalcsu.create_population(n_agents=3, seed=42)
         # Run test.
-        df = racaosimscsu.get_results_dataframe(agents)
+        df = rcaoasalcsu.get_results_dataframe(agents)
         # Check outputs.
         for idx, agent in enumerate(agents):
             self.assertAlmostEqual(
@@ -588,9 +588,9 @@ class Test_get_results_dataframe(hunitest.TestCase):
         Test get_results_dataframe with single agent.
         """
         # Prepare inputs.
-        agent = racaosimscsu.Agent(0, 0.3, 0.4, 0.5, initial_capital=2.0)
+        agent = rcaoasalcsu.Agent(0, 0.3, 0.4, 0.5, initial_capital=2.0)
         # Run test.
-        df = racaosimscsu.get_results_dataframe([agent])
+        df = rcaoasalcsu.get_results_dataframe([agent])
         # Check outputs.
         self.assertEqual(len(df), 1)
         self.assertEqual(df.iloc[0]["id"], 0)
@@ -612,9 +612,9 @@ class Test_generate_summary_statistics(hunitest.TestCase):
         Test generate_summary_statistics returns correct keys.
         """
         # Prepare inputs.
-        agents = racaosimscsu.create_population(n_agents=10, seed=42)
+        agents = rcaoasalcsu.create_population(n_agents=10, seed=42)
         # Run test.
-        stats = racaosimscsu.generate_summary_statistics(agents)
+        stats = rcaoasalcsu.generate_summary_statistics(agents)
         # Check outputs.
         expected_keys = [
             "n_agents",
@@ -639,9 +639,9 @@ class Test_generate_summary_statistics(hunitest.TestCase):
         Test generate_summary_statistics with single agent.
         """
         # Prepare inputs.
-        agent = racaosimscsu.Agent(0, 0.5, 0.5, 0.5, initial_capital=2.0)
+        agent = rcaoasalcsu.Agent(0, 0.5, 0.5, 0.5, initial_capital=2.0)
         # Run test.
-        stats = racaosimscsu.generate_summary_statistics([agent])
+        stats = rcaoasalcsu.generate_summary_statistics([agent])
         # Check outputs.
         self.assertEqual(stats["n_agents"], 1.0)
         self.assertAlmostEqual(stats["mean_capital"], 2.0)
@@ -655,7 +655,7 @@ class Test_generate_summary_statistics(hunitest.TestCase):
         # Prepare inputs.
         agents = []
         # Run test.
-        stats = racaosimscsu.generate_summary_statistics(agents)
+        stats = rcaoasalcsu.generate_summary_statistics(agents)
         # Check outputs.
         self.assertEqual(stats["n_agents"], 0)
 
@@ -664,9 +664,9 @@ class Test_generate_summary_statistics(hunitest.TestCase):
         Test top_10_pct_share sums to approximately 1.0 portion.
         """
         # Prepare inputs.
-        agents = racaosimscsu.create_population(n_agents=100, seed=42)
+        agents = rcaoasalcsu.create_population(n_agents=100, seed=42)
         # Run test.
-        stats = racaosimscsu.generate_summary_statistics(agents)
+        stats = rcaoasalcsu.generate_summary_statistics(agents)
         # Check outputs.
         total_share = (
             stats["top_10_pct_share"]
@@ -681,11 +681,11 @@ class Test_generate_summary_statistics(hunitest.TestCase):
         """
         # Prepare inputs.
         agents = [
-            racaosimscsu.Agent(i, 0.5, 0.5, 0.5, initial_capital=1.0)
+            rcaoasalcsu.Agent(i, 0.5, 0.5, 0.5, initial_capital=1.0)
             for i in range(10)
         ]
         # Run test.
-        stats = racaosimscsu.generate_summary_statistics(agents)
+        stats = rcaoasalcsu.generate_summary_statistics(agents)
         # Check outputs.
         self.assertAlmostEqual(stats["mean_capital"], stats["median_capital"])
 
@@ -694,9 +694,9 @@ class Test_generate_summary_statistics(hunitest.TestCase):
         Test capital_range is positive.
         """
         # Prepare inputs.
-        agents = racaosimscsu.create_population(n_agents=20, seed=42)
+        agents = rcaoasalcsu.create_population(n_agents=20, seed=42)
         # Run test.
-        stats = racaosimscsu.generate_summary_statistics(agents)
+        stats = rcaoasalcsu.generate_summary_statistics(agents)
         # Check outputs.
         self.assertGreater(stats["capital_range"], 0.0)
 
@@ -716,9 +716,9 @@ class Test_validate_simulation_results(hunitest.TestCase):
         Test validate_simulation_results returns True for valid agents.
         """
         # Prepare inputs.
-        agents = racaosimscsu.create_population(n_agents=10, seed=42)
+        agents = rcaoasalcsu.create_population(n_agents=10, seed=42)
         # Run test.
-        result = racaosimscsu.validate_simulation_results(agents)
+        result = rcaoasalcsu.validate_simulation_results(agents)
         # Check outputs.
         self.assertTrue(result)
 
@@ -730,41 +730,41 @@ class Test_validate_simulation_results(hunitest.TestCase):
         agents = []
         # Run test and check output.
         with self.assertRaises(AssertionError):
-            racaosimscsu.validate_simulation_results(agents)
+            rcaoasalcsu.validate_simulation_results(agents)
 
     def test3(self) -> None:
         """
         Test validate_simulation_results detects negative capital.
         """
         # Prepare inputs.
-        agent = racaosimscsu.Agent(0, 0.5, 0.5, 0.5, initial_capital=1.0)
+        agent = rcaoasalcsu.Agent(0, 0.5, 0.5, 0.5, initial_capital=1.0)
         agent.capital = -0.5
         # Run test and check output.
         with self.assertRaises(AssertionError):
-            racaosimscsu.validate_simulation_results([agent])
+            rcaoasalcsu.validate_simulation_results([agent])
 
     def test4(self) -> None:
         """
         Test validate_simulation_results detects capital_history inconsistencies.
         """
         # Prepare inputs.
-        agent = racaosimscsu.Agent(0, 0.5, 0.5, 0.5)
+        agent = rcaoasalcsu.Agent(0, 0.5, 0.5, 0.5)
         agent.lucky_events = 5
         # capital_history should have 6 entries (1 initial + 5 events)
         # but we'll leave it with 1.
         # Run test and check output.
         with self.assertRaises(AssertionError):
-            racaosimscsu.validate_simulation_results([agent])
+            rcaoasalcsu.validate_simulation_results([agent])
 
     def test5(self) -> None:
         """
         Test validate_simulation_results after simulations pass validation.
         """
         # Prepare inputs.
-        agents = racaosimscsu.create_population(n_agents=10, seed=42)
-        agents = racaosimscsu.run_simulation(agents, n_periods=5, seed=42)
+        agents = rcaoasalcsu.create_population(n_agents=10, seed=42)
+        agents = rcaoasalcsu.run_simulation(agents, n_periods=5, seed=42)
         # Run test.
-        result = racaosimscsu.validate_simulation_results(agents)
+        result = rcaoasalcsu.validate_simulation_results(agents)
         # Check outputs.
         self.assertTrue(result)
 
@@ -784,22 +784,22 @@ class Test_run_simulation(hunitest.TestCase):
         Test run_simulation with default parameters.
         """
         # Prepare inputs.
-        agents = racaosimscsu.create_population(n_agents=10, seed=42)
+        agents = rcaoasalcsu.create_population(n_agents=10, seed=42)
         # Run test.
-        result = racaosimscsu.run_simulation(agents, n_periods=10, seed=42)
+        result = rcaoasalcsu.run_simulation(agents, n_periods=10, seed=42)
         # Check outputs.
         self.assertEqual(result, agents)
-        self.assertTrue(racaosimscsu.validate_simulation_results(agents))
+        self.assertTrue(rcaoasalcsu.validate_simulation_results(agents))
 
     def test2(self) -> None:
         """
         Test run_simulation with zero events per period.
         """
         # Prepare inputs.
-        agents = racaosimscsu.create_population(n_agents=5, seed=42)
+        agents = rcaoasalcsu.create_population(n_agents=5, seed=42)
         initial_capitals = [a.capital for a in agents]
         # Run test.
-        racaosimscsu.run_simulation(
+        rcaoasalcsu.run_simulation(
             agents,
             n_periods=10,
             n_lucky_events_per_period=0,
@@ -816,12 +816,12 @@ class Test_run_simulation(hunitest.TestCase):
         Test run_simulation with seed produces reproducible results.
         """
         # Prepare inputs.
-        agents1 = racaosimscsu.create_population(n_agents=10, seed=42)
-        agents2 = racaosimscsu.create_population(n_agents=10, seed=42)
+        agents1 = rcaoasalcsu.create_population(n_agents=10, seed=42)
+        agents2 = rcaoasalcsu.create_population(n_agents=10, seed=42)
         seed = 123
         # Run test.
-        racaosimscsu.run_simulation(agents1, n_periods=5, seed=seed)
-        racaosimscsu.run_simulation(agents2, n_periods=5, seed=seed)
+        rcaoasalcsu.run_simulation(agents1, n_periods=5, seed=seed)
+        rcaoasalcsu.run_simulation(agents2, n_periods=5, seed=seed)
         # Check outputs.
         for a1, a2 in zip(agents1, agents2):
             self.assertAlmostEqual(a1.capital, a2.capital, places=5)
@@ -831,10 +831,10 @@ class Test_run_simulation(hunitest.TestCase):
         Test run_simulation modifies agents in-place.
         """
         # Prepare inputs.
-        agents = racaosimscsu.create_population(n_agents=5, seed=42)
+        agents = rcaoasalcsu.create_population(n_agents=5, seed=42)
         agents_ref = agents
         # Run test.
-        result = racaosimscsu.run_simulation(agents, n_periods=5, seed=42)
+        result = rcaoasalcsu.run_simulation(agents, n_periods=5, seed=42)
         # Check outputs.
         self.assertIs(result, agents_ref)
 
@@ -843,9 +843,9 @@ class Test_run_simulation(hunitest.TestCase):
         Test run_simulation respects capital floor of 0.01.
         """
         # Prepare inputs.
-        agents = racaosimscsu.create_population(n_agents=10, seed=42)
+        agents = rcaoasalcsu.create_population(n_agents=10, seed=42)
         # Run test.
-        racaosimscsu.run_simulation(agents, n_periods=20, seed=42)
+        rcaoasalcsu.run_simulation(agents, n_periods=20, seed=42)
         # Check outputs.
         for agent in agents:
             self.assertGreaterEqual(agent.capital, 0.01)
@@ -855,10 +855,10 @@ class Test_run_simulation(hunitest.TestCase):
         Test run_simulation raises error for non-positive n_periods.
         """
         # Prepare inputs.
-        agents = racaosimscsu.create_population(n_agents=5, seed=42)
+        agents = rcaoasalcsu.create_population(n_agents=5, seed=42)
         # Run test and check output.
         with self.assertRaises(AssertionError):
-            racaosimscsu.run_simulation(agents, n_periods=0, seed=42)
+            rcaoasalcsu.run_simulation(agents, n_periods=0, seed=42)
 
     def test7(self) -> None:
         """
@@ -868,7 +868,7 @@ class Test_run_simulation(hunitest.TestCase):
         agents = []
         # Run test and check output.
         with self.assertRaises(AssertionError):
-            racaosimscsu.run_simulation(agents, n_periods=5, seed=42)
+            rcaoasalcsu.run_simulation(agents, n_periods=5, seed=42)
 
     def test8(self) -> None:
         """
@@ -876,13 +876,13 @@ class Test_run_simulation(hunitest.TestCase):
         """
         # Prepare inputs.
         # Create agent with high IQ to capitalize on lucky events.
-        agent_high_iq = racaosimscsu.Agent(
+        agent_high_iq = rcaoasalcsu.Agent(
             0, 0.5, 0.99, 0.5, initial_capital=1.0
         )
         # Create agent with low IQ to fail capitalizing.
-        agent_low_iq = racaosimscsu.Agent(1, 0.5, 0.01, 0.5, initial_capital=1.0)
+        agent_low_iq = rcaoasalcsu.Agent(1, 0.5, 0.01, 0.5, initial_capital=1.0)
         # Run test.
-        racaosimscsu.run_simulation(
+        rcaoasalcsu.run_simulation(
             [agent_high_iq, agent_low_iq],
             n_periods=50,
             n_lucky_events_per_period=10,
@@ -898,9 +898,9 @@ class Test_run_simulation(hunitest.TestCase):
         Test networking spillover mechanism with 10% spillover probability.
         """
         # Prepare inputs.
-        agents = racaosimscsu.create_population(n_agents=10, seed=42)
+        agents = rcaoasalcsu.create_population(n_agents=10, seed=42)
         # Run test.
-        racaosimscsu.run_simulation(
+        rcaoasalcsu.run_simulation(
             agents,
             n_periods=100,
             n_lucky_events_per_period=10,
@@ -928,10 +928,10 @@ class Test_run_policy_simulation(hunitest.TestCase):
         Test run_policy_simulation with egalitarian policy.
         """
         # Prepare inputs.
-        agents = racaosimscsu.create_population(n_agents=10, seed=42)
+        agents = rcaoasalcsu.create_population(n_agents=10, seed=42)
         resource_amount = 50.0
         # Run test.
-        result = racaosimscsu.run_policy_simulation(
+        result = rcaoasalcsu.run_policy_simulation(
             agents,
             policy="egalitarian",
             resource_amount=resource_amount,
@@ -939,17 +939,17 @@ class Test_run_policy_simulation(hunitest.TestCase):
             seed=42,
         )
         # Check outputs.
-        self.assertTrue(racaosimscsu.validate_simulation_results(result))
+        self.assertTrue(rcaoasalcsu.validate_simulation_results(result))
 
     def test2(self) -> None:
         """
         Test run_policy_simulation with meritocratic policy.
         """
         # Prepare inputs.
-        agents = racaosimscsu.create_population(n_agents=10, seed=42)
+        agents = rcaoasalcsu.create_population(n_agents=10, seed=42)
         resource_amount = 50.0
         # Run test.
-        result = racaosimscsu.run_policy_simulation(
+        result = rcaoasalcsu.run_policy_simulation(
             agents,
             policy="meritocratic",
             resource_amount=resource_amount,
@@ -957,17 +957,17 @@ class Test_run_policy_simulation(hunitest.TestCase):
             seed=42,
         )
         # Check outputs.
-        self.assertTrue(racaosimscsu.validate_simulation_results(result))
+        self.assertTrue(rcaoasalcsu.validate_simulation_results(result))
 
     def test3(self) -> None:
         """
         Test run_policy_simulation with performance policy.
         """
         # Prepare inputs.
-        agents = racaosimscsu.create_population(n_agents=10, seed=42)
+        agents = rcaoasalcsu.create_population(n_agents=10, seed=42)
         resource_amount = 50.0
         # Run test.
-        result = racaosimscsu.run_policy_simulation(
+        result = rcaoasalcsu.run_policy_simulation(
             agents,
             policy="performance",
             resource_amount=resource_amount,
@@ -975,17 +975,17 @@ class Test_run_policy_simulation(hunitest.TestCase):
             seed=42,
         )
         # Check outputs.
-        self.assertTrue(racaosimscsu.validate_simulation_results(result))
+        self.assertTrue(rcaoasalcsu.validate_simulation_results(result))
 
     def test4(self) -> None:
         """
         Test run_policy_simulation with random policy.
         """
         # Prepare inputs.
-        agents = racaosimscsu.create_population(n_agents=10, seed=42)
+        agents = rcaoasalcsu.create_population(n_agents=10, seed=42)
         resource_amount = 50.0
         # Run test.
-        result = racaosimscsu.run_policy_simulation(
+        result = rcaoasalcsu.run_policy_simulation(
             agents,
             policy="random",
             resource_amount=resource_amount,
@@ -993,18 +993,18 @@ class Test_run_policy_simulation(hunitest.TestCase):
             seed=42,
         )
         # Check outputs.
-        self.assertTrue(racaosimscsu.validate_simulation_results(result))
+        self.assertTrue(rcaoasalcsu.validate_simulation_results(result))
 
     def test5(self) -> None:
         """
         Test run_policy_simulation with cate_optimal policy.
         """
         # Prepare inputs.
-        agents = racaosimscsu.create_population(n_agents=10, seed=42)
+        agents = rcaoasalcsu.create_population(n_agents=10, seed=42)
         resource_amount = 50.0
         cate_values = np.array([0.5] * 10, dtype=float)
         # Run test.
-        result = racaosimscsu.run_policy_simulation(
+        result = rcaoasalcsu.run_policy_simulation(
             agents,
             policy="cate_optimal",
             resource_amount=resource_amount,
@@ -1013,18 +1013,18 @@ class Test_run_policy_simulation(hunitest.TestCase):
             seed=42,
         )
         # Check outputs.
-        self.assertTrue(racaosimscsu.validate_simulation_results(result))
+        self.assertTrue(rcaoasalcsu.validate_simulation_results(result))
 
     def test6(self) -> None:
         """
         Test run_policy_simulation egalitarian allocates equally.
         """
         # Prepare inputs.
-        agents = racaosimscsu.create_population(n_agents=10, seed=42)
+        agents = rcaoasalcsu.create_population(n_agents=10, seed=42)
         resource_amount = 100.0
         # Check allocation by comparing the change in total capital.
         initial_total = sum(a.capital for a in agents)
-        racaosimscsu.run_policy_simulation(
+        rcaoasalcsu.run_policy_simulation(
             agents,
             policy="egalitarian",
             resource_amount=resource_amount,
@@ -1043,11 +1043,11 @@ class Test_run_policy_simulation(hunitest.TestCase):
         Test run_policy_simulation total capital is preserved after allocation.
         """
         # Prepare inputs.
-        agents = racaosimscsu.create_population(n_agents=10, seed=42)
+        agents = rcaoasalcsu.create_population(n_agents=10, seed=42)
         initial_total = sum(a.capital for a in agents)
         resource_amount = 50.0
         # Run test.
-        racaosimscsu.run_policy_simulation(
+        rcaoasalcsu.run_policy_simulation(
             agents,
             policy="egalitarian",
             resource_amount=resource_amount,
@@ -1066,10 +1066,10 @@ class Test_run_policy_simulation(hunitest.TestCase):
         Test run_policy_simulation raises error for invalid policy.
         """
         # Prepare inputs.
-        agents = racaosimscsu.create_population(n_agents=5, seed=42)
+        agents = rcaoasalcsu.create_population(n_agents=5, seed=42)
         # Run test and check output.
         with self.assertRaises(ValueError):
-            racaosimscsu.run_policy_simulation(
+            rcaoasalcsu.run_policy_simulation(
                 agents,
                 policy="invalid_policy",
                 resource_amount=50.0,
@@ -1082,10 +1082,10 @@ class Test_run_policy_simulation(hunitest.TestCase):
         Test run_policy_simulation cate_optimal requires cate_values.
         """
         # Prepare inputs.
-        agents = racaosimscsu.create_population(n_agents=5, seed=42)
+        agents = rcaoasalcsu.create_population(n_agents=5, seed=42)
         # Run test and check output.
         with self.assertRaises(AssertionError):
-            racaosimscsu.run_policy_simulation(
+            rcaoasalcsu.run_policy_simulation(
                 agents,
                 policy="cate_optimal",
                 resource_amount=50.0,
@@ -1098,10 +1098,10 @@ class Test_run_policy_simulation(hunitest.TestCase):
         Test run_policy_simulation with negative CATE values clamped to zero.
         """
         # Prepare inputs.
-        agents = racaosimscsu.create_population(n_agents=5, seed=42)
+        agents = rcaoasalcsu.create_population(n_agents=5, seed=42)
         cate_values = np.array([-1.0, 0.5, -0.5, 0.8, 0.0], dtype=float)
         # Run test.
-        racaosimscsu.run_policy_simulation(
+        rcaoasalcsu.run_policy_simulation(
             agents,
             policy="cate_optimal",
             resource_amount=50.0,
@@ -1111,7 +1111,7 @@ class Test_run_policy_simulation(hunitest.TestCase):
         )
         # Check outputs.
         # Agents with negative CATE should get 0 allocation.
-        self.assertTrue(racaosimscsu.validate_simulation_results(agents))
+        self.assertTrue(rcaoasalcsu.validate_simulation_results(agents))
 
 
 # #############################################################################
@@ -1129,11 +1129,11 @@ class Test_fit_bayesian_luck_model(hunitest.TestCase):
         Test fit_bayesian_luck_model returns model and idata.
         """
         # Prepare inputs.
-        agents = racaosimscsu.create_population(n_agents=20, seed=42)
-        racaosimscsu.run_simulation(agents, n_periods=10, seed=42)
-        df = racaosimscsu.get_results_dataframe(agents)
+        agents = rcaoasalcsu.create_population(n_agents=20, seed=42)
+        rcaoasalcsu.run_simulation(agents, n_periods=10, seed=42)
+        df = rcaoasalcsu.get_results_dataframe(agents)
         # Run test.
-        model, idata = racaosimscsu.fit_bayesian_luck_model(
+        model, idata = rcaoasalcsu.fit_bayesian_luck_model(
             df, draws=100, tune=100, random_seed=42
         )
         # Check outputs.
@@ -1150,7 +1150,7 @@ class Test_fit_bayesian_luck_model(hunitest.TestCase):
         df = pd.DataFrame({"capital": [1.0, 2.0, 3.0]})
         # Run test and check output.
         with self.assertRaises(AssertionError):
-            racaosimscsu.fit_bayesian_luck_model(
+            rcaoasalcsu.fit_bayesian_luck_model(
                 df, draws=10, tune=10, random_seed=42
             )
 
@@ -1159,18 +1159,18 @@ class Test_fit_bayesian_luck_model(hunitest.TestCase):
         Test fit_bayesian_luck_model with seed produces reproducible results.
         """
         # Prepare inputs.
-        agents1 = racaosimscsu.create_population(n_agents=15, seed=42)
-        racaosimscsu.run_simulation(agents1, n_periods=8, seed=42)
-        df1 = racaosimscsu.get_results_dataframe(agents1)
+        agents1 = rcaoasalcsu.create_population(n_agents=15, seed=42)
+        rcaoasalcsu.run_simulation(agents1, n_periods=8, seed=42)
+        df1 = rcaoasalcsu.get_results_dataframe(agents1)
 
-        agents2 = racaosimscsu.create_population(n_agents=15, seed=42)
-        racaosimscsu.run_simulation(agents2, n_periods=8, seed=42)
-        df2 = racaosimscsu.get_results_dataframe(agents2)
+        agents2 = rcaoasalcsu.create_population(n_agents=15, seed=42)
+        rcaoasalcsu.run_simulation(agents2, n_periods=8, seed=42)
+        df2 = rcaoasalcsu.get_results_dataframe(agents2)
         # Run test.
-        _, idata1 = racaosimscsu.fit_bayesian_luck_model(
+        _, idata1 = rcaoasalcsu.fit_bayesian_luck_model(
             df1, draws=50, tune=50, random_seed=123
         )
-        _, idata2 = racaosimscsu.fit_bayesian_luck_model(
+        _, idata2 = rcaoasalcsu.fit_bayesian_luck_model(
             df2, draws=50, tune=50, random_seed=123
         )
         # Check outputs.
@@ -1193,14 +1193,14 @@ class Test_summarize_bayesian_fit(hunitest.TestCase):
         Test summarize_bayesian_fit returns DataFrame with correct columns.
         """
         # Prepare inputs.
-        agents = racaosimscsu.create_population(n_agents=20, seed=42)
-        racaosimscsu.run_simulation(agents, n_periods=10, seed=42)
-        df = racaosimscsu.get_results_dataframe(agents)
-        _, idata = racaosimscsu.fit_bayesian_luck_model(
+        agents = rcaoasalcsu.create_population(n_agents=20, seed=42)
+        rcaoasalcsu.run_simulation(agents, n_periods=10, seed=42)
+        df = rcaoasalcsu.get_results_dataframe(agents)
+        _, idata = rcaoasalcsu.fit_bayesian_luck_model(
             df, draws=100, tune=100, random_seed=42
         )
         # Run test.
-        summary = racaosimscsu.summarize_bayesian_fit(idata)
+        summary = rcaoasalcsu.summarize_bayesian_fit(idata)
         # Check outputs.
         self.assertIsNotNone(summary)
         self.assertGreater(len(summary), 0)
@@ -1210,14 +1210,14 @@ class Test_summarize_bayesian_fit(hunitest.TestCase):
         Test summarize_bayesian_fit includes default parameters.
         """
         # Prepare inputs.
-        agents = racaosimscsu.create_population(n_agents=20, seed=42)
-        racaosimscsu.run_simulation(agents, n_periods=10, seed=42)
-        df = racaosimscsu.get_results_dataframe(agents)
-        _, idata = racaosimscsu.fit_bayesian_luck_model(
+        agents = rcaoasalcsu.create_population(n_agents=20, seed=42)
+        rcaoasalcsu.run_simulation(agents, n_periods=10, seed=42)
+        df = rcaoasalcsu.get_results_dataframe(agents)
+        _, idata = rcaoasalcsu.fit_bayesian_luck_model(
             df, draws=100, tune=100, random_seed=42
         )
         # Run test.
-        summary = racaosimscsu.summarize_bayesian_fit(idata)
+        summary = rcaoasalcsu.summarize_bayesian_fit(idata)
         # Check outputs.
         # Should include default parameters.
         self.assertIn("alpha", summary.index)
@@ -1228,14 +1228,14 @@ class Test_summarize_bayesian_fit(hunitest.TestCase):
         Test summarize_bayesian_fit with custom var_names parameter.
         """
         # Prepare inputs.
-        agents = racaosimscsu.create_population(n_agents=20, seed=42)
-        racaosimscsu.run_simulation(agents, n_periods=10, seed=42)
-        df = racaosimscsu.get_results_dataframe(agents)
-        _, idata = racaosimscsu.fit_bayesian_luck_model(
+        agents = rcaoasalcsu.create_population(n_agents=20, seed=42)
+        rcaoasalcsu.run_simulation(agents, n_periods=10, seed=42)
+        df = rcaoasalcsu.get_results_dataframe(agents)
+        _, idata = rcaoasalcsu.fit_bayesian_luck_model(
             df, draws=100, tune=100, random_seed=42
         )
         # Run test.
-        summary = racaosimscsu.summarize_bayesian_fit(
+        summary = rcaoasalcsu.summarize_bayesian_fit(
             idata, var_names=["alpha", "sigma"]
         )
         # Check outputs.
@@ -1259,14 +1259,14 @@ class Test_posterior_predictive_check(hunitest.TestCase):
         Test posterior_predictive_check returns correct keys.
         """
         # Prepare inputs.
-        agents = racaosimscsu.create_population(n_agents=20, seed=42)
-        racaosimscsu.run_simulation(agents, n_periods=10, seed=42)
-        df = racaosimscsu.get_results_dataframe(agents)
-        model, idata = racaosimscsu.fit_bayesian_luck_model(
+        agents = rcaoasalcsu.create_population(n_agents=20, seed=42)
+        rcaoasalcsu.run_simulation(agents, n_periods=10, seed=42)
+        df = rcaoasalcsu.get_results_dataframe(agents)
+        model, idata = rcaoasalcsu.fit_bayesian_luck_model(
             df, draws=100, tune=100, random_seed=42
         )
         # Run test.
-        ppc = racaosimscsu.posterior_predictive_check(
+        ppc = rcaoasalcsu.posterior_predictive_check(
             model, idata, df, random_seed=123
         )
         # Check outputs.
@@ -1278,14 +1278,14 @@ class Test_posterior_predictive_check(hunitest.TestCase):
         Test posterior_predictive_check PPC arrays have correct shape.
         """
         # Prepare inputs.
-        agents = racaosimscsu.create_population(n_agents=20, seed=42)
-        racaosimscsu.run_simulation(agents, n_periods=10, seed=42)
-        df = racaosimscsu.get_results_dataframe(agents)
-        model, idata = racaosimscsu.fit_bayesian_luck_model(
+        agents = rcaoasalcsu.create_population(n_agents=20, seed=42)
+        rcaoasalcsu.run_simulation(agents, n_periods=10, seed=42)
+        df = rcaoasalcsu.get_results_dataframe(agents)
+        model, idata = rcaoasalcsu.fit_bayesian_luck_model(
             df, draws=100, tune=100, random_seed=42
         )
         # Run test.
-        ppc = racaosimscsu.posterior_predictive_check(
+        ppc = rcaoasalcsu.posterior_predictive_check(
             model, idata, df, random_seed=123
         )
         # Check outputs.
