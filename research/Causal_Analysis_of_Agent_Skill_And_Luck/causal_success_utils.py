@@ -155,7 +155,7 @@ class Agent:
 
 
 # #############################################################################
-# Simulation
+# Population
 # #############################################################################
 
 
@@ -176,6 +176,11 @@ def create_population(*, n_agents: int = 100, seed: int = 42) -> List[Agent]:
         networking = float(np.clip(rng.normal(0.5, 0.15), 0.0, 1.0))
         agents.append(Agent(i, intensity, iq, networking, initial_capital=1.0))
     return agents
+
+
+# #############################################################################
+# Results and metrics
+# #############################################################################
 
 
 # TODO(ai_gp): Rename to _calculate_gini() and update callers, as this is only used internally (coding.rules.md:## Mark Private Functions)
@@ -326,6 +331,11 @@ def validate_simulation_results(agents: List[Agent]) -> bool:
             "Agent has inconsistent capital history length",
         )
     return True
+
+
+# #############################################################################
+# Simulation
+# #############################################################################
 
 
 def run_simulation(
@@ -533,7 +543,6 @@ def run_policy_simulation(
 # #############################################################################
 # Bayesian model
 # #############################################################################
-# -------------------------------------------------------------------
 
 
 def fit_bayesian_luck_model(
