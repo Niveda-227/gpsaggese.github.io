@@ -6,7 +6,7 @@ Import as:
 import research.Causal_Analysis_of_Agent_Skill_And_Luck.causal_success_utils as rcaoasalcsu
 """
 
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, cast
 
 import numpy as np
 import pandas as pd
@@ -298,9 +298,15 @@ def generate_summary_statistics(agents: List[Agent]) -> Dict[str, float]:
         "bottom_50_pct_share": float(
             df.nsmallest(bottom_50_n, "capital")["capital"].sum() / total_cap
         ),
-        "mean_lucky_events": float(df["lucky_events"].mean()),
-        "mean_unlucky_events": float(df["unlucky_events"].mean()),
-        "mean_talent_norm": float(df["talent_norm"].mean()),
+        "mean_lucky_events": float(
+            df["lucky_events"].to_numpy(dtype=float).mean()
+        ),
+        "mean_unlucky_events": float(
+            df["unlucky_events"].to_numpy(dtype=float).mean()
+        ),
+        "mean_talent_norm": float(
+            df["talent_norm"].to_numpy(dtype=float).mean()
+        ),
     }
 
 
@@ -683,7 +689,9 @@ def summarize_bayesian_fit(
     # Import ArviZ only here, so that the simulation works without it.
     import arviz as az  # type: ignore
 
-    summary = az.summary(idata, var_names=list(var_names))
+    # `az.summary()` returns a DataFrame with its default `fmt="wide"`, while
+    # its type hint also allows an xarray Dataset.
+    summary = cast(pd.DataFrame, az.summary(idata, var_names=list(var_names)))
     return summary
 
 
@@ -724,7 +732,7 @@ def posterior_predictive_check(
     # `ppc` is an `arviz.InferenceData`; `y_obs` lives inside the
     # `posterior_predictive` group and has shape (chains, draws, n) or
     # (draws, n) depending on PyMC version.
-    y_sim = np.asarray(ppc.posterior_predictive["y_obs"])
+    y_sim = np.asarray(ppc["posterior_predictive"]["y_obs"])
     if y_sim.ndim == 3:
         # (chains, draws, n) -> (chains * draws, n).
         y_sim = y_sim.reshape(-1, y_sim.shape[-1])
