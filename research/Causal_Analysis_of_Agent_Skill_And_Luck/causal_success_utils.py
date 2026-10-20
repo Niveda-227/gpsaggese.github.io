@@ -14,14 +14,6 @@ import tqdm
 
 import helpers.hdbg as hdbg
 
-# Optional Bayesian dependencies (simulation works without these).
-# try:
-import pymc as pm  # type: ignore
-import arviz as az  # type: ignore
-# except Exception:  # pragma: no cover - optional import.
-#     pm = None
-#     az = None
-
 # __all__ = [
 #     "Agent",
 #     "create_population",
@@ -578,6 +570,9 @@ def fit_bayesian_luck_model(
                 Use with `summarize_bayesian_fit()` or
                 `posterior_predictive_check()`
     """
+    # Import PyMC only here, so that the simulation works without it.
+    import pymc as pm  # type: ignore
+
     required_cols = [
         "capital",
         "lucky_events",
@@ -670,6 +665,9 @@ def summarize_bayesian_fit(
     :param var_names: parameter names to summarize
     :return: pandas DataFrame with summary statistics (mean, sd, hdi, etc.)
     """
+    # Import ArviZ only here, so that the simulation works without it.
+    import arviz as az  # type: ignore
+
     summary = az.summary(idata, var_names=list(var_names))
     return summary
 
@@ -696,6 +694,9 @@ def posterior_predictive_check(
         - "y_pred_mean": posterior predictive mean log-capital per agent
         - "y_pred_std": posterior predictive std-dev per agent
     """
+    # Import PyMC only here, so that the simulation works without it.
+    import pymc as pm  # type: ignore
+
     capital = df["capital"].to_numpy(dtype=float)
     y_obs = np.log(capital)
     with model:
