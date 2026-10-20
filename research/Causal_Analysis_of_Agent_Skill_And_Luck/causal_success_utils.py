@@ -6,13 +6,19 @@ Import as:
 import research.Causal_Analysis_of_Agent_Skill_And_Luck.causal_success_utils as rcaoasalcsu
 """
 
-from typing import List, Optional, Dict, Any, Tuple
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
 import tqdm
 
 import helpers.hdbg as hdbg
+
+# Import PyMC and ArviZ only for the type hints, since they are imported inside
+# the functions that use them.
+if TYPE_CHECKING:
+    import arviz as az
+    import pymc as pm
 
 # __all__ = [
 #     "Agent",
@@ -72,7 +78,7 @@ class Agent:
         networking: float,
         *,
         initial_capital: float = 1.0,
-    ):
+    ) -> None:
         """
         Initialize the Agent with talents and initial capital.
 
@@ -439,7 +445,7 @@ def run_policy_simulation(
     # Not done: only the "cate_optimal" policy uses `cate_values`, and an empty
     # array default would hide a missing input instead of failing on it.
     cate_values: Optional[np.ndarray] = None,
-    **simulation_kwargs,
+    **simulation_kwargs: Any,
 ) -> List[Agent]:
     """
     Allocate initial resources under a policy, then run the standard simulation.
@@ -550,7 +556,7 @@ def fit_bayesian_luck_model(
     tune: int = 1000,
     target_accept: float = 0.9,
     random_seed: int = 42,
-):
+) -> Tuple["pm.Model", "az.InferenceData"]:
     """
     Fit a Bayesian regression model to estimate causal effect of luck on capital.
 
@@ -654,7 +660,9 @@ _DEFAULT_SUMMARY_VAR_NAMES = (
 
 
 def summarize_bayesian_fit(
-    idata, *, var_names: Tuple[str, ...] = _DEFAULT_SUMMARY_VAR_NAMES
+    idata: "az.InferenceData",
+    *,
+    var_names: Tuple[str, ...] = _DEFAULT_SUMMARY_VAR_NAMES,
 ) -> pd.DataFrame:
     """
     Return a tidy summary table (posterior mean, sd, and credible intervals).
@@ -673,8 +681,8 @@ def summarize_bayesian_fit(
 
 
 def posterior_predictive_check(
-    model,
-    idata,
+    model: "pm.Model",
+    idata: "az.InferenceData",
     df: pd.DataFrame,
     *,
     random_seed: int = 123,
