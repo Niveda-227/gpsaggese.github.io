@@ -1,5 +1,10 @@
 """
-Causal Success Analysis - Simulation and Inference Utilities.
+Simulate how talent and luck drive success, and estimate the effect of luck.
+
+The simulation follows "Simulation Design" in the experimental evaluation of
+the white paper: agents with talents receive lucky and unlucky events that
+change their capital multiplicatively.
+The Bayesian model regresses log-capital on luck and talents.
 
 Import as:
 
@@ -48,7 +53,7 @@ class Agent:
 
     1. Intensity (0-1): Activity level and effort.
        - How active the agent is in seeking opportunities and experiences.
-       - Higher intensity → higher probability of encountering events (both good and bad).
+       - Higher intensity -> higher probability of encountering events (both good and bad).
        - Think of it as "surface area for luck": more active people encounter more events.
        - Influences event exposure probability via sigmoid function.
 
@@ -86,7 +91,8 @@ class Agent:
         :param intensity: Intensity talent, affects event exposure (0-1)
         :param iq: IQ talent, affects ability to capitalize on luck (0-1)
         :param networking: Networking talent, affects spillover effects (0-1)
-        :param initial_capital: Starting wealth level (default 1.0)
+        :param initial_capital: Starting wealth level
+            - Default: 1.0
         """
         self.id = int(agent_id)
         # Enforce bounds and safe floor for capital.
@@ -136,7 +142,9 @@ class Agent:
         """
         Apply an event to capital using multiplicative dynamics.
 
-        :param event_type: "lucky" or "unlucky"
+        :param event_type: kind of event
+            - `"lucky"`: multiply capital by `1 + impact`
+            - `"unlucky"`: multiply capital by `1 - impact`, floored at 0.01
         :param impact: magnitude as a decimal (e.g., 0.25 = 25%)
         """
         impact = float(abs(impact))
@@ -161,9 +169,11 @@ def create_population(*, n_agents: int = 100, seed: int = 42) -> List[Agent]:
     """
     Create a population of agents with normally distributed talents.
 
-    :param n_agents: number of agents to create (default 100)
-    :param seed: RNG seed for reproducibility (default 42)
-    :return: List of Agent objects, each with random talents and capital=1.0
+    :param n_agents: number of agents to create
+        - Default: 100
+    :param seed: RNG seed for reproducibility
+        - Default: 42
+    :return: `Agent` objects, each with random talents and capital 1.0
     """
     hdbg.dassert_lt(0, n_agents, "n_agents must be positive")
     rng = np.random.default_rng(seed)
@@ -245,7 +255,7 @@ def get_results_dataframe(agents: List[Agent]) -> pd.DataFrame:
 
 def generate_summary_statistics(agents: List[Agent]) -> Dict[str, float]:
     """
-    Generate comprehensive summary statistics for the simulation output.
+    Compute summary statistics of the simulation output.
 
     :param agents: List of Agent objects (after simulation)
     :return: Dictionary mapping metric names to float values. Example output:
@@ -314,7 +324,7 @@ def validate_simulation_results(agents: List[Agent]) -> bool:
     """
     Validate simulation results for basic correctness.
 
-    Raises AssertionError if anything looks inconsistent.
+    Raise `AssertionError` if anything looks inconsistent.
 
     :param agents: List of Agent objects to validate
     :return: True if validation passes
@@ -381,15 +391,24 @@ def run_simulation(
     Execute the agent-based simulation over multiple periods.
 
     :param agents: List of Agent objects to simulate (modified in-place)
-    :param n_periods: Number of time periods to simulate (default 80)
-    :param n_lucky_events_per_period: Lucky events per period (default 5)
-    :param n_unlucky_events_per_period: Unlucky events per period (default 5)
-    :param lucky_mean: Mean impact of lucky events (default 0.25 = 25%)
-    :param lucky_std: Std dev of lucky event impacts (default 0.08)
-    :param unlucky_mean: Mean impact of unlucky events (default 0.15 = 15%)
-    :param unlucky_std: Std dev of unlucky event impacts (default 0.05)
-    :param seed: RNG seed for reproducibility (default 42)
-    :param verbose: Show progress bar if True (default False)
+    :param n_periods: Number of time periods to simulate
+        - Default: 80
+    :param n_lucky_events_per_period: Lucky events per period
+        - Default: 5
+    :param n_unlucky_events_per_period: Unlucky events per period
+        - Default: 5
+    :param lucky_mean: Mean impact of lucky events
+        - Default: 0.25, i.e., 25%
+    :param lucky_std: Std dev of lucky event impacts
+        - Default: 0.08
+    :param unlucky_mean: Mean impact of unlucky events
+        - Default: 0.15, i.e., 15%
+    :param unlucky_std: Std dev of unlucky event impacts
+        - Default: 0.05
+    :param seed: RNG seed for reproducibility
+        - Default: 42
+    :param verbose: Show a progress bar if True
+        - Default: False
     :return: Same agents list with updated capital and event histories
     """
     hdbg.dassert_lt(0, n_periods, "n_periods must be positive")
@@ -469,13 +488,13 @@ def run_policy_simulation(
        - Typical outcome: Moderate total welfare
 
     2. "meritocratic"
-       - Allocation ∝ talent_norm (total ability)
+       - Allocation proportional to `talent_norm` (total ability)
        - Rationale: Reward potentially capable people
        - Typical outcome: Moderate final Gini
        - Typical outcome: High total welfare (resources go to productive people)
 
     3. "performance"
-       - Allocation ∝ current capital (rich get richer)
+       - Allocation proportional to current capital (rich get richer)
        - Rationale: Compound success (controversial, tested for comparison)
        - Typical outcome: Highest final Gini (most unequal)
        - Typical outcome: Lowest total welfare (resources wasted on already-rich)
@@ -487,20 +506,23 @@ def run_policy_simulation(
        - Typical outcome: Highest possible total welfare (concentrated resources)
 
     5. "cate_optimal"
-       - Allocation ∝ CATE estimates (heterogeneous treatment effects)
+       - Allocation proportional to CATE estimates (heterogeneous treatment
+         effects)
        - Rationale: Give resources to agents who benefit most from them
-       - Requires: cate_values array with one value per agent
+       - Requires: `cate_values` array with one value per agent
        - Typical outcome: High total welfare, moderate Gini
        - Note: Only allocates to agents with non-negative CATE
 
     :param agents: List of Agent objects (capital modified in-place)
-    :param policy: Allocation rule: "egalitarian", "meritocratic", "performance",
-                   "random", or "cate_optimal" (default "egalitarian")
-    :param resource_amount: Total budget to distribute at t=0 (default 100.0)
-    :param cate_values: 1D array of CATE estimates, one per agent.
-                        Required if policy="cate_optimal", ignored otherwise.
-    :param simulation_kwargs: Additional arguments forwarded to run_simulation()
-                              (e.g., n_periods=80, seed=42, verbose=True)
+    :param policy: Allocation rule: `"egalitarian"`, `"meritocratic"`,
+        `"performance"`, `"random"`, or `"cate_optimal"`
+        - Default: `"egalitarian"`
+    :param resource_amount: Total budget to distribute at t=0
+        - Default: 100.0
+    :param cate_values: 1D array of CATE estimates, one per agent
+        - Required if `policy="cate_optimal"`, ignored otherwise
+    :param simulation_kwargs: Additional arguments forwarded to
+        `run_simulation()` (e.g., `n_periods=80, seed=42, verbose=True`)
     :return: Same agents list after resource allocation and full simulation
     """
     hdbg.dassert_lt(0, len(agents), "agents list cannot be empty")
@@ -572,21 +594,24 @@ def fit_bayesian_luck_model(
     """
     Fit a Bayesian regression model to estimate causal effect of luck on capital.
 
-    :param df: DataFrame from `get_results_dataframe(agents)`, must have:
-               'capital', 'lucky_events', 'talent_intensity', 'talent_iq', 'talent_networking'
-    :param draws: Number of posterior draws per chain (default 1000)
-               Higher = more accurate posterior, longer runtime
-    :param tune: Number of NUTS tuning/burn-in iterations (default 1000)
-             These are discarded and not used in inference
-    :param target_accept: NUTS sampler target acceptance rate (default 0.9)
-                 Valid range: (0.5, 1.0), higher = slower but more stable
-    :param random_seed: RNG seed for reproducibility (default 42)
-
-    :return: Tuple (model, idata):
-        - model: PyMC `Model` object (for diagnostics, re-sampling, etc.)
-        - idata: ArviZ `InferenceData` object containing posterior samples
-                Use with `summarize_bayesian_fit()` or
-                `posterior_predictive_check()`
+    :param df: DataFrame from `get_results_dataframe(agents)`, with the
+        columns `capital`, `lucky_events`, `talent_intensity`, `talent_iq`,
+        `talent_networking`
+    :param draws: Number of posterior draws per chain
+        - Higher means a more accurate posterior and a longer runtime
+        - Default: 1000
+    :param tune: Number of NUTS tuning (burn-in) iterations, which are
+        discarded and not used in inference
+        - Default: 1000
+    :param target_accept: NUTS sampler target acceptance rate
+        - Valid range: (0.5, 1.0), higher is slower but more stable
+        - Default: 0.9
+    :param random_seed: RNG seed for reproducibility
+        - Default: 42
+    :return: tuple `(model, idata)`
+        - `model`: PyMC `Model` (for diagnostics, re-sampling, etc.)
+        - `idata`: ArviZ `InferenceData` with the posterior samples, to use
+          with `summarize_bayesian_fit()` or `posterior_predictive_check()`
     """
     # Import PyMC only here, so that the simulation works without it.
     import pymc as pm  # type: ignore
@@ -602,7 +627,8 @@ def fit_bayesian_luck_model(
         required_cols, df.columns, "DataFrame is missing required columns"
     )
     capital = df["capital"].to_numpy(dtype=float)
-    y = np.log(capital)  # log-capital is more stable and closer to normal.
+    # Log-capital is more stable and closer to normal.
+    y = np.log(capital)
     lucky = df["lucky_events"].to_numpy(dtype=float)
     intensity = df["talent_intensity"].to_numpy(dtype=float)
     iq = df["talent_iq"].to_numpy(dtype=float)
@@ -678,12 +704,14 @@ def summarize_bayesian_fit(
     var_names: Tuple[str, ...] = _DEFAULT_SUMMARY_VAR_NAMES,
 ) -> pd.DataFrame:
     """
-    Return a tidy summary table (posterior mean, sd, and credible intervals).
+    Summarize the posterior of the Bayesian model parameters.
 
-    For the Bayesian model parameters.
+    The summary has the posterior mean, sd, and credible intervals of each
+    parameter.
 
     :param idata: ArviZ `InferenceData` returned by `fit_bayesian_luck_model()`
     :param var_names: parameter names to summarize
+        - Default: the coefficients and sigma
     :return: pandas DataFrame with summary statistics (mean, sd, hdi, etc.)
     """
     # Import ArviZ only here, so that the simulation works without it.
@@ -712,10 +740,11 @@ def posterior_predictive_check(
     :param idata: ArviZ `InferenceData` with posterior draws
     :param df: same DataFrame used for fitting
     :param random_seed: RNG seed for reproducibility
+        - Default: 123
     :return: dict with:
-        - "y_obs": observed log-capital
-        - "y_pred_mean": posterior predictive mean log-capital per agent
-        - "y_pred_std": posterior predictive std-dev per agent
+        - `"y_obs"`: observed log-capital
+        - `"y_pred_mean"`: posterior predictive mean log-capital per agent
+        - `"y_pred_std"`: posterior predictive std-dev per agent
     """
     # Import PyMC only here, so that the simulation works without it.
     import pymc as pm  # type: ignore
@@ -729,7 +758,7 @@ def posterior_predictive_check(
             random_seed=random_seed,
             progressbar=False,
         )
-    # `ppc` is an `arviz.InferenceData`; `y_obs` lives inside the
+    # `ppc` is an `arviz.InferenceData`, and `y_obs` lives inside the
     # `posterior_predictive` group and has shape (chains, draws, n) or
     # (draws, n) depending on PyMC version.
     y_sim = np.asarray(ppc["posterior_predictive"]["y_obs"])
