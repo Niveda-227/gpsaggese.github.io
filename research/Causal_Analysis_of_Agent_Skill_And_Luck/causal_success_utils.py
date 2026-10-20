@@ -11,6 +11,7 @@ Import as:
 import research.Causal_Analysis_of_Agent_Skill_And_Luck.causal_success_utils as rcaoasalcsu
 """
 
+import logging
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, cast
 
 import numpy as np
@@ -18,12 +19,15 @@ import pandas as pd
 import tqdm
 
 import helpers.hdbg as hdbg
+import helpers.hprint as hprint
 
 # Import PyMC and ArviZ only for the type hints, since they are imported inside
 # the functions that use them.
 if TYPE_CHECKING:
     import arviz as az
     import pymc as pm
+
+_LOG = logging.getLogger(__name__)
 
 # __all__ = [
 #     "Agent",
@@ -94,6 +98,14 @@ class Agent:
         :param initial_capital: Starting wealth level
             - Default: 1.0
         """
+        _LOG.debug(
+            "agent_id=%s intensity=%s iq=%s networking=%s initial_capital=%s",
+            agent_id,
+            intensity,
+            iq,
+            networking,
+            initial_capital,
+        )
         self.id = int(agent_id)
         # Enforce bounds and safe floor for capital.
         self.talent = {
@@ -123,7 +135,9 @@ class Agent:
             ],
             dtype=float,
         )
-        return float(np.linalg.norm(values))
+        talent_norm = float(np.linalg.norm(values))
+        _LOG.debug("return=%s", talent_norm)
+        return talent_norm
 
     def get_event_probability(self) -> float:
         """
@@ -134,9 +148,12 @@ class Agent:
         :return: Event probability in [0, 1]
         """
         alpha = 2.0
-        return float(
+        # No debug log here: this runs for every agent at every event, and a
+        # log call would slow the simulation down noticeably.
+        probability = float(
             1.0 / (1.0 + np.exp(-alpha * (self.talent["intensity"] - 0.5)))
         )
+        return probability
 
     def apply_event(self, event_type: str, impact: float) -> None:
         """
@@ -147,6 +164,7 @@ class Agent:
             - `"unlucky"`: multiply capital by `1 - impact`, floored at 0.01
         :param impact: magnitude as a decimal (e.g., 0.25 = 25%)
         """
+        _LOG.debug("event_type=%s impact=%s", event_type, impact)
         impact = float(abs(impact))
         if event_type == "lucky":
             self.capital *= 1.0 + impact
@@ -175,8 +193,10 @@ def create_population(*, n_agents: int = 100, seed: int = 42) -> List[Agent]:
         - Default: 42
     :return: `Agent` objects, each with random talents and capital 1.0
     """
+    _LOG.debug(hprint.to_str("n_agents seed"))
     hdbg.dassert_lt(0, n_agents, "n_agents must be positive")
     rng = np.random.default_rng(seed)
+    # Draw the three talents of each agent, clipped to [0, 1].
     agents: List[Agent] = []
     for i in range(n_agents):
         intensity = float(np.clip(rng.normal(0.5, 0.15), 0.0, 1.0))
@@ -203,6 +223,7 @@ def calculate_gini(values: np.ndarray) -> float:
     :param values: 1D array of non-negative values (e.g., capital amounts)
     :return: Gini coefficient in [0, 1]
     """
+    _LOG.debug("values.shape=%s", np.shape(values))
     x = np.asarray(values, dtype=float)
     hdbg.dassert_lt(
         0, x.size, "Cannot calculate Gini coefficient for empty array"
@@ -212,14 +233,20 @@ def calculate_gini(values: np.ndarray) -> float:
         "Gini coefficient requires non-negative values",
     )
     if np.all(x == 0):
-        return 0.0
-    x_sorted = np.sort(x)
-    n = x_sorted.size
-    index = np.arange(1, n + 1, dtype=float)
-    gini = (2.0 * np.sum(index * x_sorted)) / (n * np.sum(x_sorted)) - (
-        n + 1.0
-    ) / n
-    return float(np.clip(gini, 0.0, 1.0))
+        # All the values are zero, so there is no inequality.
+        gini = 0.0
+    else:
+        # Use the closed form on sorted values:
+        # `G = 2 sum_i i x_(i) / (n sum_i x_i) - (n + 1) / n`.
+        x_sorted = np.sort(x)
+        n = x_sorted.size
+        index = np.arange(1, n + 1, dtype=float)
+        gini = (2.0 * np.sum(index * x_sorted)) / (n * np.sum(x_sorted)) - (
+            n + 1.0
+        ) / n
+        gini = float(np.clip(gini, 0.0, 1.0))
+    _LOG.debug("return=%s", gini)
+    return gini
 
 
 # TODO(ai_gp): Rename to _get_results_dataframe() and update callers, as this is only used internally (coding.rules.md:## Mark Private Functions)
@@ -232,25 +259,30 @@ def get_results_dataframe(agents: List[Agent]) -> pd.DataFrame:
     :param agents: List of Agent objects
     :return: DataFrame with agent attributes
     """
+    _LOG.debug("len(agents)=%s", len(agents))
     if not agents:
-        return pd.DataFrame()
-    rows: List[Dict[str, Any]] = []
-    for a in agents:
-        rows.append(
-            {
-                "id": a.id,
-                "talent_intensity": a.talent["intensity"],
-                "talent_iq": a.talent["iq"],
-                "talent_networking": a.talent["networking"],
-                "initial_capital": a.talent["initial_capital"],
-                "talent_norm": a.talent_norm,
-                "capital": a.capital,
-                "lucky_events": a.lucky_events,
-                "unlucky_events": a.unlucky_events,
-                "net_events": a.lucky_events - a.unlucky_events,
-            }
-        )
-    return pd.DataFrame(rows)
+        df = pd.DataFrame()
+    else:
+        # Build one row per agent.
+        rows: List[Dict[str, Any]] = []
+        for a in agents:
+            rows.append(
+                {
+                    "id": a.id,
+                    "talent_intensity": a.talent["intensity"],
+                    "talent_iq": a.talent["iq"],
+                    "talent_networking": a.talent["networking"],
+                    "initial_capital": a.talent["initial_capital"],
+                    "talent_norm": a.talent_norm,
+                    "capital": a.capital,
+                    "lucky_events": a.lucky_events,
+                    "unlucky_events": a.unlucky_events,
+                    "net_events": a.lucky_events - a.unlucky_events,
+                }
+            )
+        df = pd.DataFrame(rows)
+    _LOG.debug("df.shape=%s", df.shape)
+    return df
 
 
 def generate_summary_statistics(agents: List[Agent]) -> Dict[str, float]:
@@ -276,48 +308,54 @@ def generate_summary_statistics(agents: List[Agent]) -> Dict[str, float]:
             'mean_talent_norm': 1.95,
         }
     """
+    _LOG.debug("len(agents)=%s", len(agents))
     df = get_results_dataframe(agents)
     if df.empty:
-        return {"n_agents": 0}
-    capital = df["capital"].to_numpy(dtype=float)
-    gini = calculate_gini(capital)
-    min_cap = float(np.min(capital))
-    max_cap = float(np.max(capital))
-    total_cap = float(np.sum(capital))
-    n = len(df)
-    # Guard against division by zero (should not happen due to floor).
-    cap_range = max_cap / max(min_cap, 1e-12)
-    top_10_n = max(1, n // 10)
-    top_20_n = max(1, n // 5)
-    bottom_50_n = max(1, n // 2)
-    return {
-        "n_agents": float(n),
-        "mean_capital": float(np.mean(capital)),
-        "median_capital": float(np.median(capital)),
-        "std_capital": float(np.std(capital)),
-        "min_capital": min_cap,
-        "max_capital": max_cap,
-        "capital_range": float(cap_range),
-        "gini_coefficient": float(gini),
-        "top_10_pct_share": float(
-            df.nlargest(top_10_n, "capital")["capital"].sum() / total_cap
-        ),
-        "top_20_pct_share": float(
-            df.nlargest(top_20_n, "capital")["capital"].sum() / total_cap
-        ),
-        "bottom_50_pct_share": float(
-            df.nsmallest(bottom_50_n, "capital")["capital"].sum() / total_cap
-        ),
-        "mean_lucky_events": float(
-            df["lucky_events"].to_numpy(dtype=float).mean()
-        ),
-        "mean_unlucky_events": float(
-            df["unlucky_events"].to_numpy(dtype=float).mean()
-        ),
-        "mean_talent_norm": float(
-            df["talent_norm"].to_numpy(dtype=float).mean()
-        ),
-    }
+        stats: Dict[str, float] = {"n_agents": 0}
+    else:
+        # Compute the capital totals used by the shares.
+        capital = df["capital"].to_numpy(dtype=float)
+        gini = calculate_gini(capital)
+        min_cap = float(np.min(capital))
+        max_cap = float(np.max(capital))
+        total_cap = float(np.sum(capital))
+        n = len(df)
+        # Guard against division by zero (should not happen due to floor).
+        cap_range = max_cap / max(min_cap, 1e-12)
+        # Use at least one agent in each group, even for small populations.
+        top_10_n = max(1, n // 10)
+        top_20_n = max(1, n // 5)
+        bottom_50_n = max(1, n // 2)
+        stats = {
+            "n_agents": float(n),
+            "mean_capital": float(np.mean(capital)),
+            "median_capital": float(np.median(capital)),
+            "std_capital": float(np.std(capital)),
+            "min_capital": min_cap,
+            "max_capital": max_cap,
+            "capital_range": float(cap_range),
+            "gini_coefficient": float(gini),
+            "top_10_pct_share": float(
+                df.nlargest(top_10_n, "capital")["capital"].sum() / total_cap
+            ),
+            "top_20_pct_share": float(
+                df.nlargest(top_20_n, "capital")["capital"].sum() / total_cap
+            ),
+            "bottom_50_pct_share": float(
+                df.nsmallest(bottom_50_n, "capital")["capital"].sum() / total_cap
+            ),
+            "mean_lucky_events": float(
+                df["lucky_events"].to_numpy(dtype=float).mean()
+            ),
+            "mean_unlucky_events": float(
+                df["unlucky_events"].to_numpy(dtype=float).mean()
+            ),
+            "mean_talent_norm": float(
+                df["talent_norm"].to_numpy(dtype=float).mean()
+            ),
+        }
+    _LOG.debug("return=%s", stats)
+    return stats
 
 
 def validate_simulation_results(agents: List[Agent]) -> bool:
@@ -329,6 +367,7 @@ def validate_simulation_results(agents: List[Agent]) -> bool:
     :param agents: List of Agent objects to validate
     :return: True if validation passes
     """
+    _LOG.debug("len(agents)=%s", len(agents))
     df = get_results_dataframe(agents)
     hdbg.dassert(not df.empty, "No agents provided to validate")
     hdbg.dassert(not (df["capital"] < 0).any(), "Negative capital detected")
@@ -337,6 +376,7 @@ def validate_simulation_results(agents: List[Agent]) -> bool:
         not ((df["lucky_events"] < 0).any() or (df["unlucky_events"] < 0).any()),
         "Negative event counts detected",
     )
+    # Each event appends one entry to the history of the initial capital.
     for a in agents:
         expected = 1 + a.lucky_events + a.unlucky_events
         hdbg.dassert_eq(
@@ -344,7 +384,9 @@ def validate_simulation_results(agents: List[Agent]) -> bool:
             expected,
             "Agent has inconsistent capital history length",
         )
-    return True
+    is_valid = True
+    _LOG.debug("return=%s", is_valid)
+    return is_valid
 
 
 # #############################################################################
@@ -363,6 +405,7 @@ def _select_exposed_agent(agents: List[Agent], rng: np.random.Generator) -> int:
     :param rng: random generator of the simulation
     :return: index of the selected agent
     """
+    _LOG.debug("len(agents)=%s", len(agents))
     n_agents = len(agents)
     exposure = np.array([a.get_event_probability() for a in agents], dtype=float)
     exposure = (
@@ -371,6 +414,7 @@ def _select_exposed_agent(agents: List[Agent], rng: np.random.Generator) -> int:
         else np.ones(n_agents) / n_agents
     )
     selected_idx = int(rng.choice(n_agents, p=exposure))
+    _LOG.debug("return=%s", selected_idx)
     return selected_idx
 
 
@@ -411,6 +455,12 @@ def run_simulation(
         - Default: False
     :return: Same agents list with updated capital and event histories
     """
+    _LOG.debug(
+        hprint.to_str(
+            "n_periods n_lucky_events_per_period n_unlucky_events_per_period"
+            " lucky_mean lucky_std unlucky_mean unlucky_std seed verbose"
+        )
+    )
     hdbg.dassert_lt(0, n_periods, "n_periods must be positive")
     hdbg.dassert_lt(0, len(agents), "agents list cannot be empty")
     hdbg.dassert_lte(
@@ -464,6 +514,7 @@ def run_simulation(
                 np.clip(rng.normal(unlucky_mean, unlucky_std), 0.05, 0.30)
             )
             selected.apply_event("unlucky", impact)
+    _LOG.debug("len(agents)=%s", len(agents))
     return agents
 
 
@@ -525,6 +576,7 @@ def run_policy_simulation(
         `run_simulation()` (e.g., `n_periods=80, seed=42, verbose=True`)
     :return: Same agents list after resource allocation and full simulation
     """
+    _LOG.debug(hprint.to_str("policy resource_amount simulation_kwargs"))
     hdbg.dassert_lt(0, len(agents), "agents list cannot be empty")
     hdbg.dassert_lt(
         -0.0001, resource_amount, "resource_amount must be non-negative"
@@ -534,48 +586,53 @@ def run_policy_simulation(
     # Handle random policy separately (single winner).
     if policy == "random":
         winner_idx = int(rng.integers(n))
+        _LOG.debug("winner_idx=%s", winner_idx)
         agents[winner_idx].capital += resource_amount
         agents[winner_idx].capital_history[0] = agents[winner_idx].capital
-        return run_simulation(agents, **simulation_kwargs)
-    # For all other policies, we compute weights and allocate proportionally.
-    weights = np.zeros(n, dtype=float)
-    if policy == "egalitarian":
-        weights[:] = 1.0
-    elif policy == "meritocratic":
-        weights = np.array([a.talent_norm for a in agents], dtype=float)
-    elif policy == "performance":
-        weights = np.array([a.capital for a in agents], dtype=float)
-    elif policy == "cate_optimal":
-        hdbg.dassert_is_not(
-            cate_values,
-            None,
-            "cate_values must be provided when policy='cate_optimal'.",
-        )
-        cate_array = np.asarray(cate_values, dtype=float)
-        hdbg.dassert_eq(
-            cate_array.shape[0],
-            n,
-            "cate_values must have one value per agent",
-        )
-        # Use only non-negative CATEs; negative values are clamped to zero.
-        weights = np.maximum(cate_array, 0.0)
     else:
-        raise ValueError(
-            f"Unknown policy: {policy}. Must be one of: "
-            f"egalitarian, meritocratic, performance, random, cate_optimal"
-        )
-    total_weight = float(weights.sum())
-    if total_weight <= 0.0:
-        # Fallback: if everything is zero, allocate equally.
-        weights = np.ones(n, dtype=float)
-        total_weight = float(n)
-    shares = weights / total_weight
-    allocations = shares * float(resource_amount)
-    for a, alloc in zip(agents, allocations):
-        a.capital += float(alloc)
-        # Keep history consistent at t=0.
-        a.capital_history[0] = a.capital
-    return run_simulation(agents, **simulation_kwargs)
+        # For all other policies, we compute weights and allocate
+        # proportionally.
+        weights = np.zeros(n, dtype=float)
+        if policy == "egalitarian":
+            weights[:] = 1.0
+        elif policy == "meritocratic":
+            weights = np.array([a.talent_norm for a in agents], dtype=float)
+        elif policy == "performance":
+            weights = np.array([a.capital for a in agents], dtype=float)
+        elif policy == "cate_optimal":
+            hdbg.dassert_is_not(
+                cate_values,
+                None,
+                "cate_values must be provided when policy='cate_optimal'.",
+            )
+            cate_array = np.asarray(cate_values, dtype=float)
+            hdbg.dassert_eq(
+                cate_array.shape[0],
+                n,
+                "cate_values must have one value per agent",
+            )
+            # Use only non-negative CATEs; negative values are clamped to zero.
+            weights = np.maximum(cate_array, 0.0)
+        else:
+            raise ValueError(
+                f"Unknown policy: {policy}. Must be one of: "
+                f"egalitarian, meritocratic, performance, random, cate_optimal"
+            )
+        total_weight = float(weights.sum())
+        if total_weight <= 0.0:
+            # Fallback: if everything is zero, allocate equally.
+            weights = np.ones(n, dtype=float)
+            total_weight = float(n)
+        shares = weights / total_weight
+        allocations = shares * float(resource_amount)
+        _LOG.debug("allocations[:5]=%s", allocations[:5])
+        for a, alloc in zip(agents, allocations):
+            a.capital += float(alloc)
+            # Keep history consistent at t=0.
+            a.capital_history[0] = a.capital
+    # Run the standard simulation from the allocated capital.
+    agents = run_simulation(agents, **simulation_kwargs)
+    return agents
 
 
 # #############################################################################
@@ -613,6 +670,7 @@ def fit_bayesian_luck_model(
         - `idata`: ArviZ `InferenceData` with the posterior samples, to use
           with `summarize_bayesian_fit()` or `posterior_predictive_check()`
     """
+    _LOG.debug(hprint.to_str("df.shape draws tune target_accept random_seed"))
     # Import PyMC only here, so that the simulation works without it.
     import pymc as pm  # type: ignore
 
@@ -683,6 +741,7 @@ def fit_bayesian_luck_model(
             return_inferencedata=True,
             progressbar=True,
         )
+    _LOG.debug("Sampled draws=%s tune=%s", draws, tune)
     return model, idata
 
 
@@ -714,12 +773,14 @@ def summarize_bayesian_fit(
         - Default: the coefficients and sigma
     :return: pandas DataFrame with summary statistics (mean, sd, hdi, etc.)
     """
+    _LOG.debug(hprint.to_str("var_names"))
     # Import ArviZ only here, so that the simulation works without it.
     import arviz as az  # type: ignore
 
     # `az.summary()` returns a DataFrame with its default `fmt="wide"`, while
     # its type hint also allows an xarray Dataset.
     summary = cast(pd.DataFrame, az.summary(idata, var_names=list(var_names)))
+    _LOG.debug("summary.shape=%s", summary.shape)
     return summary
 
 
@@ -746,6 +807,7 @@ def posterior_predictive_check(
         - `"y_pred_mean"`: posterior predictive mean log-capital per agent
         - `"y_pred_std"`: posterior predictive std-dev per agent
     """
+    _LOG.debug(hprint.to_str("df.shape random_seed"))
     # Import PyMC only here, so that the simulation works without it.
     import pymc as pm  # type: ignore
 
@@ -772,8 +834,10 @@ def posterior_predictive_check(
         raise ValueError(f"Unexpected PPC shape for y_obs: {y_sim.shape}")
     y_pred_mean = y_sim.mean(axis=0)
     y_pred_std = y_sim.std(axis=0)
-    return {
+    _LOG.debug("y_sim.shape=%s", y_sim.shape)
+    ppc_results = {
         "y_obs": y_obs,
         "y_pred_mean": y_pred_mean,
         "y_pred_std": y_pred_std,
     }
+    return ppc_results
