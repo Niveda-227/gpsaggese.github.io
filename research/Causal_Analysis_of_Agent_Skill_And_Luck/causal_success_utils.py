@@ -387,9 +387,15 @@ def run_simulation(
     :return: Same agents list with updated capital and event histories
     """
     hdbg.dassert_lt(0, n_periods, "n_periods must be positive")
-    hdbg.dassert(agents, "agents list cannot be empty")
-    hdbg.dassert(
-        n_lucky_events_per_period >= 0 and n_unlucky_events_per_period >= 0,
+    hdbg.dassert_lt(0, len(agents), "agents list cannot be empty")
+    hdbg.dassert_lte(
+        0,
+        n_lucky_events_per_period,
+        "event counts per period must be non-negative",
+    )
+    hdbg.dassert_lte(
+        0,
+        n_unlucky_events_per_period,
         "event counts per period must be non-negative",
     )
 
@@ -491,7 +497,7 @@ def run_policy_simulation(
                               (e.g., n_periods=80, seed=42, verbose=True)
     :return: Same agents list after resource allocation and full simulation
     """
-    hdbg.dassert(agents, "agents list cannot be empty")
+    hdbg.dassert_lt(0, len(agents), "agents list cannot be empty")
     hdbg.dassert_lt(
         -0.0001, resource_amount, "resource_amount must be non-negative"
     )
@@ -586,8 +592,9 @@ def fit_bayesian_luck_model(
         "talent_iq",
         "talent_networking",
     ]
-    missing = [c for c in required_cols if c not in df.columns]
-    hdbg.dassert(not missing, "DataFrame is missing required columns:", missing)
+    hdbg.dassert_is_subset(
+        required_cols, df.columns, "DataFrame is missing required columns"
+    )
     capital = df["capital"].to_numpy(dtype=float)
     y = np.log(capital)  # log-capital is more stable and closer to normal.
     lucky = df["lucky_events"].to_numpy(dtype=float)
