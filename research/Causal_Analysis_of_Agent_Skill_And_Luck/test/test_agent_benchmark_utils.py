@@ -1,7 +1,7 @@
 """
 Import as:
 
-import research.Causal_Analysis_of_Agent_Skill_And_Luck.test.test_agent_benchmark_utils as rcaoasaltt
+import research.Causal_Analysis_of_Agent_Skill_And_Luck.test.test_agent_benchmark_utils as rcaoasalttabu
 """
 
 import logging
