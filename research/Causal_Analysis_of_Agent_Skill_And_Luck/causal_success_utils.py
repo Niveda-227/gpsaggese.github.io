@@ -404,7 +404,7 @@ def run_simulation(
         n_unlucky_events_per_period,
         "event counts per period must be non-negative",
     )
-
+    # Set up the random generator and the optional progress bar.
     rng = np.random.default_rng(seed)
     n_agents = len(agents)
     if verbose:
@@ -611,24 +611,24 @@ def fit_bayesian_luck_model(
     # ============
     # Does luck causally affect outcomes, even after controlling for talent?
     # This model answers that by regressing log(capital) on both luck and talent.
-
+    #
     # THE MODEL
     # =========
     # Linear Bayesian regression:
-
+    #
     #     log(capital_i) = alpha
     #                      + beta_luck * lucky_events_i
     #                      + beta_intensity * talent_intensity_i
     #                      + beta_iq * talent_iq_i
     #                      + beta_networking * talent_networking_i
     #                      + epsilon_i
-
+    #
     # Where:
     #     - log(capital) is the outcome (log-scale for stability)
     #     - lucky_events is the treatment (how many beneficial events occurred)
     #     - talent_* are confounders (control for inherent ability)
     #     - epsilon ~ N(0, sigma) is residual error
-
+    #
     # PRIORS
     # ======
     # All coefficients use weakly informative N(0, 1) priors (centered at 0).
