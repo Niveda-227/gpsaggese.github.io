@@ -338,6 +338,28 @@ def validate_simulation_results(agents: List[Agent]) -> bool:
 # #############################################################################
 
 
+def _select_exposed_agent(agents: List[Agent], rng: np.random.Generator) -> int:
+    """
+    Pick the agent hit by one event, with probability proportional to exposure.
+
+    The exposure of an agent is `Agent.get_event_probability()`. If all
+    exposures are zero, every agent is equally likely.
+
+    :param agents: population of agents
+    :param rng: random generator of the simulation
+    :return: index of the selected agent
+    """
+    n_agents = len(agents)
+    exposure = np.array([a.get_event_probability() for a in agents], dtype=float)
+    exposure = (
+        exposure / exposure.sum()
+        if exposure.sum() > 0
+        else np.ones(n_agents) / n_agents
+    )
+    selected_idx = int(rng.choice(n_agents, p=exposure))
+    return selected_idx
+
+
 def run_simulation(
     agents: List[Agent],
     *,
@@ -384,15 +406,7 @@ def run_simulation(
     for _ in periods_iter:
         # Lucky events.
         for _ in range(n_lucky_events_per_period):
-            exposure = np.array(
-                [a.get_event_probability() for a in agents], dtype=float
-            )
-            exposure = (
-                exposure / exposure.sum()
-                if exposure.sum() > 0
-                else np.ones(n_agents) / n_agents
-            )
-            selected_idx = int(rng.choice(n_agents, p=exposure))
+            selected_idx = _select_exposed_agent(agents, rng)
             selected = agents[selected_idx]
             impact = float(
                 np.clip(rng.normal(lucky_mean, lucky_std), 0.05, 0.50)
@@ -415,15 +429,7 @@ def run_simulation(
                         agents[inherited_idx].apply_event("lucky", impact * 0.5)
         # Unlucky events.
         for _ in range(n_unlucky_events_per_period):
-            exposure = np.array(
-                [a.get_event_probability() for a in agents], dtype=float
-            )
-            exposure = (
-                exposure / exposure.sum()
-                if exposure.sum() > 0
-                else np.ones(n_agents) / n_agents
-            )
-            selected_idx = int(rng.choice(n_agents, p=exposure))
+            selected_idx = _select_exposed_agent(agents, rng)
             selected = agents[selected_idx]
             impact = float(
                 np.clip(rng.normal(unlucky_mean, unlucky_std), 0.05, 0.30)
