@@ -1,6 +1,6 @@
 # Versions are pinned to the ones tested together in this image.
-# - pymc 5.16.2 needs numpy < 2
-# - arviz 0.18.0 fails to import with matplotlib >= 3.10
+# - pymc 5.16.2 runs on pytensor 2.25, which needs numpy < 2
+# - arviz 0.18.0 fails to import with matplotlib >= 3.11
 arviz==0.18.0
 econml==0.16.0
 matplotlib==3.9.4
