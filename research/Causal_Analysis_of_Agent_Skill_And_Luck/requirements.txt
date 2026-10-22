@@ -1,11 +1,15 @@
+# Versions are pinned to the ones tested together in this image.
+# - pymc 5.16.2 needs numpy < 2
+# - arviz 0.18.0 fails to import with matplotlib >= 3.10
 arviz==0.18.0
-econml
-matplotlib
-numpy
-pandas
+econml==0.16.0
+matplotlib==3.9.4
+numpy==1.26.4
+pandas==3.0.6
 pymc==5.16.2
-scikit-learn
-scipy
-seaborn
-statsmodels
-tqdm
+pytest==9.1.1
+scikit-learn==1.6.1
+scipy==1.17.1
+seaborn==0.13.2
+statsmodels==0.15.0
+tqdm==4.70.1
