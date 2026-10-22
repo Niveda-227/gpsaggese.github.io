@@ -53,6 +53,8 @@ dist/
 
 # ---- Compiled Notebooks ----
 *.nbconvert.ipynb
+# Written by the notebook tests in `test/test_docker_all.py`.
+*.html
 
 # ---- Cache ----
 .cache/
